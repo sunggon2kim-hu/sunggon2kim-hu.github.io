@@ -1,0 +1,17 @@
+{
+  "name": "RONi 스팀 100°C 챌린지",
+  "short_name": "RONi 챌린지",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#10202a",
+  "theme_color": "#10202a",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "160x160",
+      "type": "image/png"
+    }
+  ]
+}
