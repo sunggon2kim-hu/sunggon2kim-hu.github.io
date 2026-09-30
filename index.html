@@ -32,8 +32,8 @@
 }
 html,body{height:100%}
 [hidden]{display:none!important}
-body{background:var(--ink);color:var(--steam);font-family:var(--body);-webkit-user-select:none;user-select:none;overflow:hidden}
-.app{height:100%;display:grid;grid-template-rows:auto 1fr auto;gap:10px;padding-inline:16px;padding-block:12px;box-sizing:border-box;max-width:1280px;margin:0 auto}
+body{margin:0;background:var(--ink);color:var(--steam);font-family:var(--body);-webkit-user-select:none;user-select:none;overflow:hidden}
+.app{height:100%;display:grid;grid-template-rows:auto auto auto;align-content:start;gap:10px;padding-inline:16px;padding-block:12px;box-sizing:border-box;max-width:1280px;margin:0 auto}
 
 .hud{display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;justify-content:space-between}
 .brand{display:grid;gap:2px;min-width:0}
@@ -58,7 +58,7 @@ body{background:var(--ink);color:var(--steam);font-family:var(--body);-webkit-us
 .thermo.hot .bar{box-shadow:0 0 0 2px var(--heat),0 0 18px rgba(255,90,54,.6)}
 .thermo.hot .temp{color:var(--heat)}
 
-.stage{position:relative;min-height:0;display:grid;place-items:center;border-radius:16px;background:#0b171e;overflow:hidden}
+.stage{position:relative;min-height:0;height:60vh;display:grid;place-items:center;border-radius:16px;background:#0b171e;overflow:hidden}
 canvas{display:block;touch-action:none;border-radius:10px}
 .overlay{position:absolute;inset:0;display:grid;place-items:center;padding:16px;background:rgba(10,22,29,.82);backdrop-filter:blur(3px);overflow:auto}
 .card{width:min(680px,100%);display:grid;gap:16px;text-align:center}
@@ -80,16 +80,16 @@ canvas{display:block;touch-action:none;border-radius:10px}
 .message em{font-style:normal;color:var(--heat)}
 .small{font-size:12px;color:var(--mist);margin:0}
 
-.controls{display:flex;align-items:center;gap:12px 16px;justify-content:space-between;flex-wrap:wrap}
-.hint{margin:0;font-size:clamp(15px,1.8vw,19px);font-weight:600;min-width:0;flex:1 1 260px}
+.controls{display:grid;gap:10px}
+.hint{margin:0;font-size:clamp(15px,1.8vw,19px);font-weight:600;min-width:0;text-align:center}
 .hint.alert{color:var(--gold)}
 .hint.hot{color:var(--heat)}
 .hint.cool{color:var(--suction)}
-.btns{display:flex;gap:12px;flex:0 1 auto}
-.act{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;font-family:var(--display);font-size:22px;color:var(--steam);border:0;border-radius:999px;padding:12px 28px 12px 12px;cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent}
-.act .pill{background:var(--ink);color:var(--steam);border-radius:999px;padding:8px 12px;font-size:17px;position:relative}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.act{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:14px;min-height:84px;font-family:var(--display);font-size:clamp(24px,3.2vw,34px);color:var(--steam);border:0;border-radius:999px;padding:14px 24px;cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent}
+.act .pill{background:var(--ink);color:var(--steam);border-radius:999px;padding:10px 16px;font-size:clamp(18px,2.2vw,24px);position:relative}
 .act .txt{position:relative;display:grid;text-align:left;line-height:1.1}
-.act .txt small{font-family:var(--body);font-size:11px;font-weight:700;opacity:.85}
+.act .txt small{white-space:nowrap;font-family:var(--body);font-size:clamp(12px,1.4vw,15px);font-weight:700;opacity:.85}
 .steam{background:var(--heat);box-shadow:0 6px 0 #a8321a}
 .steam.on{transform:translateY(4px);box-shadow:0 2px 0 #a8321a,0 0 30px rgba(255,90,54,.7)}
 .power{background:#1f7fae;box-shadow:0 6px 0 #135173}
@@ -101,8 +101,10 @@ canvas{display:block;touch-action:none;border-radius:10px}
 
 @media (max-width:720px){
   .usp{grid-template-columns:1fr}
-  .btns{width:100%}
-  .act{flex:1;justify-content:center;padding-right:16px;font-size:19px}
+  .btns{gap:10px}
+  .act{min-height:72px;padding:10px 12px;gap:8px;font-size:21px}
+  .act .pill{padding:7px 10px;font-size:15px}
+  .act .txt small{font-size:11px}
   .thermo{max-width:none}
 }
 @media (prefers-reduced-motion:reduce){.nudge{animation:none;outline:4px solid rgba(255,194,75,.55)}.fill{transition:none}}
@@ -226,9 +228,17 @@ const ui = {
 document.querySelectorAll(".product, #kicker").forEach(el => el.textContent = CONFIG.product);
 
 let scale = 1, dpr = 1;
+const app = document.querySelector(".app"), hud = document.querySelector(".hud"), controls = document.querySelector(".controls");
 function resize(){
-  const r = stage.getBoundingClientRect();
-  scale = Math.max(0.2, Math.min((r.width - 8) / W, (r.height - 8) / H));
+  // 지도 크기에 맞춰 stage 높이를 정해서 버튼이 지도 바로 밑에 오도록 함
+  const cs = getComputedStyle(app);
+  const availH = app.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - hud.offsetHeight - controls.offsetHeight - 2 * parseFloat(cs.rowGap);
+  const availW = stage.clientWidth;
+  scale = Math.max(0.2, Math.min((availW - 8) / W, (availH - 8) / H));
+  let stageH = H * scale + 8;
+  const ov = !ui.start.hidden ? ui.start : !ui.result.hidden ? ui.result : null;
+  if (ov) stageH = Math.max(stageH, Math.min(availH, ov.firstElementChild.offsetHeight + 32));
+  stage.style.height = Math.max(stageH, 120) + "px";
   dpr = Math.min(window.devicePixelRatio || 1, 2);
   cv.style.width = (W * scale) + "px";
   cv.style.height = (H * scale) + "px";
@@ -306,6 +316,7 @@ function startGame(){
   reset();
   ui.start.hidden = true; ui.result.hidden = true;
   state = "ready"; readyT = 2.4;
+  resize();
 }
 function endGame(){
   state = "over"; setSteam(false);
@@ -319,6 +330,7 @@ function endGame(){
   const title = stainN >= 10 ? "스팀 마스터!" : stainN >= 6 ? "얼룩 해결사!" : stainN >= 3 ? "좋은 출발이에요!" : "얼룩이 아직 남았어요";
   $("rMsg").innerHTML = title + "<br>" + CONFIG.resultMessage;
   ui.result.hidden = false;
+  resize();
   ui.hint.textContent = "다시 하기를 눌러 한 번 더 도전해 보세요"; ui.hint.className = "hint";
   ui.steamBtn.classList.remove("nudge"); ui.powerBtn.classList.remove("nudge");
   idleTimer = setTimeout(toTitle, CONFIG.idleReturnSeconds * 1000);
@@ -326,6 +338,7 @@ function endGame(){
 function toTitle(){
   reset(); state = "title";
   ui.result.hidden = true; ui.start.hidden = false;
+  resize();
   ui.hint.textContent = "시작하기를 눌러 주세요"; ui.hint.className = "hint";
 }
 $("startBtn").addEventListener("click", startGame);
