@@ -101,11 +101,25 @@ canvas{display:block;touch-action:none;border-radius:10px}
 
 @media (max-width:720px){
   .usp{grid-template-columns:1fr}
+  #startScreen .usp{display:none}
+  .card{gap:10px}
+  .overlay{padding:12px}
+  .cta{font-size:22px;padding:11px 40px}
+  .result-score{font-size:48px}
+  .usp.result{grid-template-columns:repeat(3,1fr);gap:6px}
+  .usp.result li{padding:8px 6px;text-align:center;gap:2px}
+  .usp.result .n{font-size:10px;letter-spacing:0;line-height:1.3}
+  .usp.result b.num{font-size:24px}
+  .usp.result span{font-size:11px;line-height:1.3}
   .btns{gap:10px}
   .act{min-height:72px;padding:10px 12px;gap:8px;font-size:21px}
   .act .pill{padding:7px 10px;font-size:15px}
   .act .txt small{font-size:11px}
   .thermo{max-width:none}
+}
+@media (max-width:380px){
+  .act{font-size:18px;gap:6px;padding:10px 8px}
+  .act .pill{padding:6px 8px;font-size:13px}
 }
 @media (prefers-reduced-motion:reduce){.nudge{animation:none;outline:4px solid rgba(255,194,75,.55)}.fill{transition:none}}
 </style>
