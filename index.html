@@ -404,6 +404,8 @@ function steer(dt, speed){
     moveRobot(tx, ty, Math.min(d, speed*dt));
   }
 }
+const IDLE_SAYS = ["얼룩엔 무빙스팀을 누르세요", "부스러기엔 파워 흡입을 누르세요", "바닥을 터치하면 그쪽으로 갈게요"];
+let bubble = null, sayIdle = {i:0, t:3.5};
 function addFloat(x, y, text, color){ floats.push({x, y, text, color, life:1.3}); }
 function showZone(){
   const z = ZONES[zone];
@@ -499,6 +501,22 @@ function update(dt){
   else if (powered){ hint = "최대 30W 흡입력으로 주변 먼지까지 빨아들이는 중"; cls = "hint cool"; }
   else if (steaming){ hint = "무빙스팀은 켠 채로 이동할 수 있어요. 얼룩 위로 지나가 보세요"; }
   else if (visited.size < 3){ hint = "다른 공간으로 가 보세요. AI가 공간에 맞춰 청소 방식을 바꿔요"; }
+  // 로봇 말풍선
+  let nearS = Infinity, nearD = Infinity;
+  for (const t of stains) nearS = Math.min(nearS, Math.hypot(t.x-robot.x, t.y-robot.y));
+  for (const t of debris) nearD = Math.min(nearD, Math.hypot(t.x-robot.x, t.y-robot.y));
+  let say = null;
+  if (s && !steaming) say = {text:"얼룩 발견! 무빙스팀을 누르세요", color:"#ff5a36"};
+  else if (s && temp < 100) say = {text:"스팀 가열 중… " + Math.floor(temp) + "°C", color:"#ff5a36"};
+  else if (s) say = {text:"100°C 스팀으로 싹싹!", color:"#ff5a36"};
+  else if (powered) say = {text:"30W 파워 흡입 중!", color:"#4fb8e6"};
+  else if (nearDebris || nearD < 150) say = power.cd === 0 ? {text:"부스러기! 파워 흡입을 누르세요", color:"#4fb8e6"} : {text:"파워 흡입 충전 중… 잠깐만요", color:"#4fb8e6"};
+  else if (nearS < 170 && !steaming) say = {text:"얼룩 근처예요. 무빙스팀을 누르세요", color:"#ff5a36"};
+  else if (steaming) say = {text:"스팀 켠 채로 얼룩 위로 가 주세요", color:"#ff5a36"};
+  else if (sayIdle.t <= 0){ sayIdle.i = (sayIdle.i + 1) % IDLE_SAYS.length; sayIdle.t = 3.5; }
+  sayIdle.t -= dt;
+  bubble = say || {text:IDLE_SAYS[sayIdle.i], color:"#ffc24b"};
+
   if (ui.hint.textContent !== hint) ui.hint.textContent = hint;
   if (ui.hint.className !== cls) ui.hint.className = cls;
   ui.steamBtn.classList.toggle("nudge", nSteam);
@@ -677,6 +695,26 @@ function drawFloats(){
   }
   ctx.globalAlpha = 1;
 }
+function drawBubble(){
+  if (!bubble || state !== "play") return;
+  ctx.font = "19px 'Black Han Sans', sans-serif";
+  const w = ctx.measureText(bubble.text).width + 32, h = 40, gap = R + 16;
+  const below = robot.y - gap - h < 6;
+  const cx = Math.max(w/2 + 6, Math.min(W - w/2 - 6, robot.x));
+  const y = below ? robot.y + gap : robot.y - gap - h;
+  const tx = Math.max(cx - w/2 + 18, Math.min(cx + w/2 - 18, robot.x));
+  ctx.fillStyle = "rgba(255,255,255,0.96)";
+  roundRect(ctx, cx - w/2, y, w, h, 20); ctx.fill();
+  ctx.beginPath();
+  if (below){ ctx.moveTo(tx-9, y+1); ctx.lineTo(tx, y-11); ctx.lineTo(tx+9, y+1); }
+  else { ctx.moveTo(tx-9, y+h-1); ctx.lineTo(tx, y+h+11); ctx.lineTo(tx+9, y+h-1); }
+  ctx.fill();
+  ctx.strokeStyle = bubble.color; ctx.lineWidth = 3;
+  roundRect(ctx, cx - w/2, y, w, h, 20); ctx.stroke();
+  ctx.fillStyle = "#10202a"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(bubble.text, cx, y + h/2 + 1);
+  ctx.textBaseline = "alphabetic";
+}
 function drawBanner(){
   if (!banner || state !== "play") return;
   const a = Math.min(1, banner.life * 2, (2.6 - banner.life) * 5);
@@ -712,6 +750,7 @@ function render(now){
   drawRobot(now);
   drawParticles();
   drawFloats();
+  drawBubble();
   drawBanner();
   if (state === "ready") drawReady();
 }
